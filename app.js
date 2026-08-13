@@ -7,17 +7,13 @@ const sessionRoutes = require('./src/routes/sessionRoutes');
 
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
+
+// Serve static frontend files from public directory
 app.use(express.static('public'));
 
-// Core Health Endpoint
-app.get('/api/health', (req, res) => {
-    res.status(200).json({ status: 'online', system: 'Mentor-Mentee API Core Engine' });
-});
-
-// Feature Routes
+// Mount API routes matching the UI endpoints
 app.use('/api/users', userRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/sessions', sessionRoutes);

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mentor-Mentee Platform</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
+    .container { max-width: 1000px; margin: 0 auto; }
+    h1 { color: #1a73e8; border-bottom: 2px solid #1a73e8; padding-bottom: 10px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .card h2 { margin-top: 0; color: #333; font-size: 1.2rem; }
+    input, select, button, textarea { width: 100%; padding: 8px; margin: 6px 0 12px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+    button { background: #1a73e8; color: white; font-weight: bold; border: none; cursor: pointer; }
+    button:hover { background: #1557b0; }
+    .item { background: #f8f9fa; padding: 10px; border-left: 4px solid #1a73e8; margin-bottom: 8px; border-radius: 2px; }
+    .badge { background: #e8f0fe; color: #1a73e8; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+    .status-pending { border-left-color: #fbbc04; }
+    .status-accepted { border-left-color: #34a853; }
+    .status-rejected { border-left-color: #ea4335; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Mentor-Mentee Platform Dashboard</h1>
+
+    <div class="grid">
+      <!-- 1. USER MANAGEMENT -->
+      <div class="card">
+        <h2>Create Profile (Mentor / Mentee)</h2>
+        <form id="userForm">
+          <input type="text" id="userName" placeholder="Full Name" required>
+          <input type="email" id="userEmail" placeholder="Email Address" required>
+          <select id="userRole">
+            <option value="mentor">Mentor</option>
+            <option value="mentee">Mentee</option>
+            <option value="admin">Admin</option>
+          </select>
+          <input type="text" id="userSkills" placeholder="Skills (comma separated e.g. JS, Node, Python)">
+          <button type="submit">Create User Profile</button>
+        </form>
+      </div>
+
+      <!-- 2. SEARCH & DISCOVERY (BONUS FEATURE) -->
+      <div class="card">
+        <h2>Mentor Search by Skill</h2>
+        <input type="text" id="searchSkill" placeholder="Type a skill (e.g. JavaScript)" onkeyup="filterMentors()">
+        <div id="mentorsList"></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- 3. MENTORSHIP REQUESTS -->
+      <div class="card">
+        <h2>Send Mentorship Request</h2>
+        <form id="requestForm">
+          <input type="text" id="reqMenteeId" placeholder="Your Mentee ID" required>
+          <input type="text" id="reqMentorId" placeholder="Target Mentor ID" required>
+          <input type="text" id="reqTopic" placeholder="Topic / Goals" required>
+          <button type="submit">Send Request</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Mentorship Requests List</h2>
+        <button onclick="loadRequests()">Refresh Requests</button>
+        <div id="requestsList"></div>
+      </div>
+    </div>
+
+    <!-- 4. SESSION MANAGEMENT & RATINGS -->
+    <div class="card">
+      <h2>Schedule Session & Submit Feedback</h2>
+      <div class="grid">
+        <form id="sessionForm">
+          <input type="text" id="sessRequestId" placeholder="Accepted Request ID" required>
+          <input type="datetime-local" id="sessDate" required>
+          <button type="submit">Schedule Session</button>
+        </form>
+
+        <form id="feedbackForm">
+          <input type="text" id="sessId" placeholder="Session ID" required>
+          <select id="sessRating">
+            <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
+            <option value="4">⭐⭐⭐⭐ (4/5)</option>
+            <option value="3">⭐⭐⭐ (3/5)</option>
+            <option value="2">⭐⭐ (2/5)</option>
+            <option value="1">⭐ (1/5)</option>
+          </select>
+          <textarea id="sessFeedback" placeholder="Session Feedback / Notes"></textarea>
+          <button type="submit">Submit Feedback</button>
+        </form>
+      </div>
+      <div id="sessionsList" style="margin-top: 15px;"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = '/api';
+
+    // Fetch and display users
+    async function loadUsers() {
+      try {
+        const res = await fetch(`${API_URL}/users`);
+        const users = await res.json();
+        window.allUsers = users;
+        filterMentors();
+      } catch (err) {
+        document.getElementById('mentorsList').innerHTML = '<p style="color:red">Failed to load users from /api/users</p>';
+      }
+    }
+
+    // Skill Filter Feature
+    function filterMentors() {
+      const query = document.getElementById('searchSkill').value.toLowerCase();
+      const mentorsList = document.getElementById('mentorsList');
+      if (!window.allUsers) return;
+
+      const filtered = window.allUsers.filter(u => 
+        u.role === 'mentor' && 
+        (!query || (u.skills && u.skills.some(s => s.toLowerCase().includes(query))))
+      );
+
+      mentorsList.innerHTML = filtered.length ? filtered.map(m => `
+        <div class="item">
+          <strong>${m.name}</strong> (ID: ${m.id})<br>
+          <span class="badge">${m.skills ? m.skills.join(', ') : 'No skills listed'}</span>
+        </div>
+      `).join('') : '<p>No mentors found matching skill.</p>';
+    }
+
+    // Submit user form
+    document.getElementById('userForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = {
+        name: document.getElementById('userName').value,
+        email: document.getElementById('userEmail').value,
+        role: document.getElementById('userRole').value,
+        skills: document.getElementById('userSkills').value.split(',').map(s => s.trim())
+      };
+      await fetch(`${API_URL}/users`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+      loadUsers();
+      e.target.reset();
+    });
+
+    // Load requests
+    async function loadRequests() {
+      try {
+        const res = await fetch(`${API_URL}/requests`);
+        const requests = await res.json();
+        document.getElementById('requestsList').innerHTML = requests.map(r => `
+          <div class="item status-${r.status}">
+            <strong>Topic: ${r.topic}</strong> (ID: ${r.id})<br>
+            Mentee: ${r.menteeId} | Mentor: ${r.mentorId} | Status: <strong>${r.status}</strong>
+            ${r.status === 'pending' ? `
+              <br><button style="width: auto; padding: 4px 8px; margin-top: 4px;" onclick="updateStatus('${r.id}', 'accepted')">Accept</button>
+              <button style="width: auto; padding: 4px 8px; margin-top: 4px; background: #ea4335;" onclick="updateStatus('${r.id}', 'rejected')">Reject</button>
+            ` : ''}
+          </div>
+        `).join('');
+      } catch (err) {
+        document.getElementById('requestsList').innerHTML = '<p style="color:red">Failed to load requests from /api/requests</p>';
+      }
+    }
+
+    async function updateStatus(id, status) {
+      await fetch(`${API_URL}/requests/${id}/status`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ status })
+      });
+      loadRequests();
+    }
+
+    // Initial loading
+    loadUsers();
+    loadRequests();
+  </script>
+</body>
+</html>
