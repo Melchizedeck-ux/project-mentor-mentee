@@ -1,0 +1,22 @@
+[
+  {
+    "id": "usr_1786637810954",
+    "name": "Augustine Fuli",
+    "email": "eliotnchongtakang@gmail.com",
+    "role": "mentor",
+    "skills": [
+      "Front-end mentor"
+    ],
+    "bio": ""
+  },
+  {
+    "id": "usr_1786639732790",
+    "name": "Open Dreams",
+    "email": "fulieliot658@gmail.com",
+    "role": "mentor",
+    "skills": [
+      "Backend"
+    ],
+    "bio": ""
+  }
+]
