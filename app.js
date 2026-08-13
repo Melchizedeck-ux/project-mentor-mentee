@@ -18,7 +18,7 @@ app.get('/api/health', (req, res) => {
 
 // Feature Routes
 app.use('/api/users', userRoutes);
-app.use('/api/requests', requestRoutes);/
+app.use('/api/requests', requestRoutes);
 app.use('/api/sessions', sessionRoutes);
 
 module.exports = app;
