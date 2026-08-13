@@ -11,7 +11,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
-
 // Core Health Endpoint
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'online', system: 'Mentor-Mentee API Core Engine' });
@@ -19,7 +18,7 @@ app.get('/api/health', (req, res) => {
 
 // Feature Routes
 app.use('/api/users', userRoutes);
-app.use('/api/requests', requestRoutes);
+app.use('/api/requests', requestRoutes);/
 app.use('/api/sessions', sessionRoutes);
 
 module.exports = app;
